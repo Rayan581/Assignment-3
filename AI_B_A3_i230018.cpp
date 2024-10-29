@@ -51,6 +51,7 @@ private:
         Node *new_root = node->left;
         node->left = new_root->right;
         new_root->right = node;
+        return new_root;
     }
 
     /**
@@ -64,6 +65,7 @@ private:
         Node *new_root = node->right;
         node->right = new_root->left;
         new_root->left = node;
+        return new_root;
     }
 
     /**
@@ -88,6 +90,39 @@ private:
     {
         node->right = rightRotate(node->right);
         return leftRotate(node);
+    }
+
+    Node *insert(Node *R, Game game, float hours_played, int achievements_unlocked)
+    {
+        if (R == NULL)
+        {
+            // Create a new node and return it as the new root of this subtree
+            Node *newNode = new Node;
+            newNode->game = game;
+            newNode->hours_played = hours_played;
+            newNode->achievements_unlocked = achievements_unlocked;
+            newNode->height = 0;
+            return newNode;
+        }
+
+        // Insert based on gameId ordering
+        if (game.gameId < R->game.gameId)
+        {
+            R->left = insert(R->left, game, hours_played, achievements_unlocked);
+        }
+        else if (game.gameId > R->game.gameId)
+        {
+            R->right = insert(R->right, game, hours_played, achievements_unlocked);
+        }
+        else
+        {
+            // Duplicate gameId; handle as needed, e.g., return without insertion
+            return R;
+        }
+
+        // Update height of the node
+        R->height = 1 + max(Height(R->left), Height(R->right));
+        return R;
     }
 
 public:
@@ -144,51 +179,15 @@ public:
      * This function creates a new node with the given game information and inserts
      * it into the binary search tree based on the game's ID.
      *
-     * @param R The root node of the binary search tree.
      * @param game The Game object to be inserted.
      * @param hours_played The number of hours played for this game.
      * @param achievements_unlocked The number of achievements unlocked for this game.
      *
      * @return void
      */
-    Node *insert(Node *R, Game game, float hours_played, int achievements_unlocked)
+    void insert(Game game, float hours_played, int achievements_unlocked)
     {
-        if (R == NULL)
-        {
-            R = new Node;
-            cout << "Helo" << endl;
-            R->game = game;
-            R->hours_played = hours_played;
-            R->achievements_unlocked = achievements_unlocked;
-            R->right = NULL;
-            R->left = NULL;
-            R->height = 0;
-        }
-        else if (game.gameId < R->game.gameId)
-        {
-            R->left = insert(R->left, game, hours_played, achievements_unlocked);
-            // if (BalanceFactor(R) == 2)
-            // {
-            //     if (BalanceFactor(R->left) > 0)
-            //         R = rightRotate(R);
-            //     else
-            //         R = leftRightRotate(R);
-            // }
-        }
-        else if (game.gameId > R->game.gameId)
-        {
-            R->right = insert(R->right, game, hours_played, achievements_unlocked);
-            // if (BalanceFactor(R) == -2)
-            // {
-            //     if (BalanceFactor(R->right) < 0)
-            //         R = leftRotate(R);
-            //     else
-            //         R = rightLeftRotate(R);
-            // }
-        }
-
-        // R->height = 1 + max(Height(R->left), Height(R->right));
-        return R;
+        root = insert(root, game, hours_played, achievements_unlocked);
     }
 
     void print(Node *R)
@@ -249,8 +248,9 @@ public:
         {
             R = new Node;
             R->playerId = playerId;
-            R->games_played.insert(R->games_played.getRoot(), game, hours_played, achievements_unlocked);
+            R->games_played.insert(game, hours_played, achievements_unlocked);
         }
+        return R;
     }
 
     void print()
@@ -268,10 +268,10 @@ int main()
 {
     Game_Played game;
 
-    game.insert(game.getRoot(), Game("1", "Game1", "Developer1", "Publisher1", 1.5, 1000), 10.5, 5);
-    game.insert(game.getRoot(), Game("2", "Game2", "Developer2", "Publisher2", 2.0, 2000), 20.0, 10);
-    game.insert(game.getRoot(), Game("3", "Game3", "Developer3", "Publisher3", 1.0, 1500), 15.0, 7);
-    game.insert(game.getRoot(), Game("4", "Game4", "Developer4", "Publisher4", 1.5, 1200), 12.0, 4);
+    game.insert(Game("1", "Game1", "Developer1", "Publisher1", 1.5, 1000), 10.5, 5);
+    game.insert(Game("2", "Game2", "Developer2", "Publisher2", 2.0, 2000), 20.0, 10);
+    game.insert(Game("3", "Game3", "Developer3", "Publisher3", 1.0, 1500), 15.0, 7);
+    game.insert(Game("4", "Game4", "Developer4", "Publisher4", 1.5, 1200), 12.0, 4);
 
     game.print(game.getRoot());
 
