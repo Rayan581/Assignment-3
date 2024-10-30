@@ -42,6 +42,7 @@ class Game_Played
         {
             right = NULL;
             left = NULL;
+            height = -1;
         }
     };
     Node *root;
@@ -75,17 +76,18 @@ class Game_Played
     {
         if (node == NULL)
         {
-            Node *newNode = new Node;
-            newNode->game = game;
-            newNode->hours_played = hours_played;
-            newNode->achievements_unlocked = achievements_unlocked;
-            newNode->height = 1;
-            return newNode;
+            node = new Node;
+            node->game = game;
+            node->hours_played = hours_played;
+            node->achievements_unlocked = achievements_unlocked;
+            node->height = 0;
         }
         if (isGreater(node->game.gameId, game.gameId))
             node->left = insert(node->left, game, hours_played, achievements_unlocked);
         else if (isGreater(game.gameId, node->game.gameId))
             node->right = insert(node->right, game, hours_played, achievements_unlocked);
+
+        node->height = max((node->left ? node->left->height : -1), (node->right ? node->right->height : -1)) + 1;
 
         return node;
     }
@@ -111,7 +113,16 @@ public:
         if (node == NULL)
             return;
         print(node->left);
-        cout << node->game.gameId << " " << node->game.name << " " << node->game.developer << " " << node->game.publisher << " " << node->game.file_size_in_GB << " " << node->game.downloads << " " << node->hours_played << " " << node->achievements_unlocked << endl;
+        cout << endl;
+        cout << "Game ID: " << node->game.gameId << endl
+             << "Game Name: " << node->game.name << endl
+             << "Game Develepor: " << node->game.developer << endl
+             << "Game Publisher: " << node->game.publisher << endl
+             << "Game Size: " << node->game.file_size_in_GB << " GB" << endl
+             << "Downloads: " << node->game.downloads << endl
+             << "Hours Played: " << node->hours_played << endl
+             << "Achievemets Earned: " << node->achievements_unlocked << endl
+             << "Height: " << node->height << endl;
         print(node->right);
     }
 };
