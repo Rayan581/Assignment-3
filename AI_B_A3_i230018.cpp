@@ -42,7 +42,7 @@ class Game_Played
         {
             right = NULL;
             left = NULL;
-            height = -1;
+            height = 0;
         }
     };
     Node *root;
@@ -72,22 +72,93 @@ class Game_Played
         return false;
     }
 
+    int Height(Node *node)
+    {
+        return (node ? node->height : -1);
+    }
+
+    Node *rotateRight(Node *node)
+    {
+        Node *leftChild = node->left;
+        Node *rightChild = leftChild->right;
+
+        leftChild->right = node;
+        node->left = rightChild;
+
+        node->height = max(Height(node->left), Height(node->right)) + 1;
+        leftChild->height = max(Height(leftChild->left), Height(leftChild->right)) + 1;
+
+        return leftChild;
+    }
+
+    Node *rotateLeft(Node *node)
+    {
+        Node *rightChild = node->right;
+        Node *leftChild = rightChild->left;
+
+        rightChild->left = node;
+        node->right = leftChild;
+
+        node->height = max(Height(node->left), Height(node->right)) + 1;
+        rightChild->height = max(Height(rightChild->left), Height(rightChild->right)) + 1;
+
+        return rightChild;
+    }
+
+    Node *rotateRightLeft(Node *node)
+    {
+        node->right = rotateRight(node->right);
+        return rotateLeft(node);
+    }
+
+    Node *rotateLeftRight(Node *node)
+    {
+        node->left = rotateLeft(node->left);
+        return rotateRight(node);
+    }
+
     Node *insert(Node *node, Game game, float hours_played, int achievements_unlocked)
     {
-        if (node == NULL)
+        if (node == nullptr)
         {
             node = new Node;
             node->game = game;
             node->hours_played = hours_played;
             node->achievements_unlocked = achievements_unlocked;
             node->height = 0;
+            return node;
         }
+
         if (isGreater(node->game.gameId, game.gameId))
             node->left = insert(node->left, game, hours_played, achievements_unlocked);
         else if (isGreater(game.gameId, node->game.gameId))
             node->right = insert(node->right, game, hours_played, achievements_unlocked);
 
-        node->height = max((node->left ? node->left->height : -1), (node->right ? node->right->height : -1)) + 1;
+        node->height = 1 + max(Height(node->left), Height(node->right));
+
+        int balance = Height(node->left) - Height(node->right);
+
+        // Balance the tree if it becomes unbalanced
+        if (balance > 1)
+        {
+            // Left Left Case
+            if (Height(node->left->left) - Height(node->left->right) >= 0)
+                return rotateRight(node);
+
+            // Left Right Case
+            else
+                return rotateLeftRight(node);
+        }
+        if (balance < -1)
+        {
+            // Right Right Case
+            if (Height(node->right->right) - Height(node->right->left) >= 0)
+                return rotateLeft(node);
+
+            // Right Left Case
+            else
+                return rotateRightLeft(node);
+        }
 
         return node;
     }
@@ -121,7 +192,7 @@ public:
              << "Game Size: " << node->game.file_size_in_GB << " GB" << endl
              << "Downloads: " << node->game.downloads << endl
              << "Hours Played: " << node->hours_played << endl
-             << "Achievemets Earned: " << node->achievements_unlocked << endl
+             << "Achievements Earned: " << node->achievements_unlocked << endl
              << "Height: " << node->height << endl;
         print(node->right);
     }
