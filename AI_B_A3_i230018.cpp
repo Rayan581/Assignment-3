@@ -21,6 +21,19 @@ private:
         int height;
         Node *right;
         Node *left;
+
+        Node()
+        {
+            gameId = "";
+            name = "";
+            developer = "";
+            publisher = "";
+            file_size_in_GB = 0.0;
+            downloads = 0;
+            height = 0;
+            right = nullptr;
+            left = nullptr;
+        }
     };
     Node *root;
 
@@ -208,6 +221,9 @@ class Game_Played
 
         Node()
         {
+            gameId = "";
+            hours_played = 0.0;
+            achievements_unlocked = 0;
             right = NULL;
             left = NULL;
             height = 0;
@@ -396,6 +412,11 @@ private:
 
         Node()
         {
+            name = "";
+            playerId = "";
+            phnNo = "";
+            email = "";
+            password = "";
             left = NULL;
             right = NULL;
             height = 0;
@@ -496,7 +517,7 @@ private:
         if (isGreater(node->playerId, _playerId))
             node->left = insert(node->left, _playerId, _name, _phnNo, _email, _password);
         else if (isGreater(_playerId, node->playerId))
-            node->right = insert(node->left, _playerId, _name, _phnNo, _email, _password);
+            node->right = insert(node->right, _playerId, _name, _phnNo, _email, _password);
 
         node->height = 1 + max(height(node->left), height(node->right));
 
@@ -535,7 +556,7 @@ private:
 
         print(node->left);
         cout << node->playerId << " - " << node->name << endl;
-        node->games.print();
+        // node->games.print();
         print(node->right);
     }
 
@@ -549,6 +570,11 @@ public:
     Node *getRoot()
     {
         return root;
+    }
+
+    int getHeight()
+    {
+        return height(root);
     }
 
     // Inserts a node into the tree
@@ -722,9 +748,9 @@ void load_games(Game &game)
             j++;
         }
 
-        // Insert a new game
+        // // Insert a new game
         game.insert(gameData[0], gameData[1], gameData[2], gameData[3], toFloat(gameData[4]), toInt(gameData[5]));
-        cout << ".";
+        // cout << ".";
     }
 }
 
@@ -733,11 +759,11 @@ int main()
     Player player;
     Game game;
 
-    // load_player(player);
-    // player.print();
-
+    load_player(player);
     load_games(game);
-    game.print();
+    // player.print();
+    // game.print();
+
 
     return 0;
 }
