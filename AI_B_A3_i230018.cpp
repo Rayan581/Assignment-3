@@ -1,3 +1,7 @@
+// Rayan Ahmed
+// 23i-0018
+// Assignment 03
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,7 +11,7 @@ using namespace std;
 // Implements the game tree structure
 class Game
 {
-private:
+public:
     class Node
     {
     public:
@@ -34,7 +38,22 @@ private:
             right = nullptr;
             left = nullptr;
         }
+
+        Node(string _gameId, string _name, string _developer, string _publisher, float _file_size_in_GB, int _downloads)
+        {
+            gameId = _gameId;
+            name = _name;
+            developer = _developer;
+            publisher = _publisher;
+            file_size_in_GB = _file_size_in_GB;
+            downloads = _downloads;
+            height = 0;
+            right = nullptr;
+            left = nullptr;
+        }
     };
+
+private:
     Node *root;
 
     // Returns if the number stored in string form is greater than the other
@@ -198,6 +217,49 @@ public:
         root = insert(root, gameId, name, developer, publisher, file_size_in_GB, downloads);
     }
 
+    // Updates the details of a game in the tree
+    void updateGame(string _gameId, Node updateNode)
+    {
+        Node *node = root;
+
+        while (node != NULL)
+        {
+            if (node->gameId == _gameId)
+            {
+                node->name = updateNode.name;
+                node->gameId = updateNode.gameId;
+                node->developer = updateNode.developer;
+                node->publisher = updateNode.publisher;
+                node->file_size_in_GB = updateNode.file_size_in_GB;
+                node->downloads = updateNode.downloads;
+                return;
+            }
+            else if (isGreater(node->gameId, _gameId))
+                node = node->left;
+            else
+                node = node->right;
+        }
+
+        throw out_of_range("Invalid Game Id!");
+    }
+
+    Node *get_game(string _gameId)
+    {
+        Node *node = root;
+
+        while (node != NULL)
+        {
+            if (node->gameId == _gameId)
+                return node;
+            else if (isGreater(node->gameId, _gameId))
+                node = node->left;
+            else
+                node = node->right;
+        }
+
+        throw out_of_range("Invalid Game Id!");
+    }
+
     // Prints the tree in order
     void print()
     {
@@ -208,6 +270,7 @@ public:
 // Implements the game played tree structure
 class Game_Played
 {
+public:
     class Node
     {
     public:
@@ -228,7 +291,19 @@ class Game_Played
             left = NULL;
             height = 0;
         }
+
+        Node(string _gameId, float _hours_played, int _achievements_unlocked)
+        {
+            gameId = _gameId;
+            hours_played = _hours_played;
+            achievements_unlocked = _achievements_unlocked;
+            right = NULL;
+            left = NULL;
+            height = 0;
+        }
     };
+
+private:
     Node *root;
 
     // Returns if the number stored in string form is greater than the other
@@ -323,6 +398,8 @@ class Game_Played
             node->left = insert(node->left, _gameId, hours_played, achievements_unlocked);
         else if (isGreater(_gameId, node->gameId))
             node->right = insert(node->right, _gameId, hours_played, achievements_unlocked);
+        else
+            throw invalid_argument("Cannot insert duplicate game"); // Throw exception when trying to insert duplicate player
 
         node->height = 1 + max(height(node->left), height(node->right));
 
@@ -395,7 +472,7 @@ public:
 // Implements the player tree structure
 class Player
 {
-private:
+public:
     class Node
     {
     public:
@@ -421,7 +498,21 @@ private:
             right = NULL;
             height = 0;
         }
+
+        Node(string _name, string _playerId, string _phnNo, string _email, string _password)
+        {
+            name = _name;
+            playerId = _playerId;
+            phnNo = _phnNo;
+            email = _email;
+            password = _password;
+            left = NULL;
+            right = NULL;
+            height = 0;
+        }
     };
+
+private:
     Node *root;
 
     // Returns if the number stored in string form is greater than the other
@@ -518,6 +609,8 @@ private:
             node->left = insert(node->left, _playerId, _name, _phnNo, _email, _password);
         else if (isGreater(_playerId, node->playerId))
             node->right = insert(node->right, _playerId, _name, _phnNo, _email, _password);
+        else
+            throw invalid_argument("Cannot insert duplicate player"); // Throw exception when trying to insert duplicate player
 
         node->height = 1 + max(height(node->left), height(node->right));
 
@@ -600,6 +693,50 @@ public:
         return node;
     }
 
+    // Update the information of the player
+    void updatePlayer(string _playerId, Node updatedNode)
+    {
+        Node *node = root;
+
+        while (node)
+        {
+            cout << node->playerId << endl;
+            if (node->playerId == _playerId)
+            {
+                node->name = updatedNode.name;
+                node->playerId = updatedNode.playerId;
+                node->phnNo = updatedNode.phnNo;
+                node->email = updatedNode.email;
+                node->password = updatedNode.password;
+                return;
+            }
+            else if (isGreater(node->playerId, _playerId))
+                node = node->left;
+            else
+                node = node->right;
+        }
+
+        throw out_of_range("Invalid Player Id!");
+    }
+
+    // Returns the player with the given player id
+    Node *get_player(string _playerId)
+    {
+        Node *node = root;
+
+        while (node)
+        {
+            if (node->playerId == _playerId)
+                return node;
+            else if (isGreater(node->playerId, _playerId))
+                node = node->left;
+            else
+                node = node->right;
+        }
+
+        throw out_of_range("Invalid Player Id!");
+    }
+
     // Prints the tree in order
     void print()
     {
@@ -658,7 +795,7 @@ void load_player(Player &player)
 
     int THRESHOLD = (BATCH % 100) * 10 + 100;
 
-    ifstream file("Players.txt");
+    ifstream file("hello.txt");
 
     // Read each line from the file
     string line = "";
@@ -750,7 +887,6 @@ void load_games(Game &game)
 
         // // Insert a new game
         game.insert(gameData[0], gameData[1], gameData[2], gameData[3], toFloat(gameData[4]), toInt(gameData[5]));
-        // cout << ".";
     }
 }
 
@@ -760,10 +896,12 @@ int main()
     Game game;
 
     load_player(player);
-    load_games(game);
-    // player.print();
-    // game.print();
+    // load_games(game);
 
+    player.updatePlayer("1973833443", Player::Node("Rayan Ahmed", "230018", "0232", "ra33286", "ra990"));
+    player.print();
+    cout << endl;
+    player.updatePlayer("230018", Player::Node("Rayanosures", "6122005", "0323", "ra1905", "ra1905"));
 
     return 0;
 }
