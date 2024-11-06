@@ -182,6 +182,90 @@ private:
         return node;
     }
 
+    // Returns the minimum value in a tree
+    Node *minValueNode(Node *node)
+    {
+        Node *current = node;
+        while (current->left != nullptr)
+            current = current->left;
+        return current;
+    }
+
+    Node *deleteNode(Node *node, string gameId, Node *updatedNode = nullptr)
+    {
+        if (node == nullptr)
+            return node;
+
+        if (isGreater(node->gameId, gameId))
+            node->left = deleteNode(node->left, gameId, updatedNode);
+        else if (isGreater(gameId, node->gameId))
+            node->right = deleteNode(node->right, gameId, updatedNode);
+        else
+        {
+            if (updatedNode != nullptr)
+            {
+                // Instead of deleting, directly update the node's data
+                node->gameId = updatedNode->gameId != "" ? updatedNode->gameId : node->gameId;
+                node->name = updatedNode->name != "" ? updatedNode->name : node->name;
+                node->developer = updatedNode->developer != "" ? updatedNode->developer : node->developer;
+                node->publisher = updatedNode->publisher != "" ? updatedNode->publisher : node->publisher;
+                node->file_size_in_GB = updatedNode->file_size_in_GB != -1.0f ? updatedNode->file_size_in_GB : node->file_size_in_GB;
+                node->downloads = updatedNode->downloads != -1 ? updatedNode->downloads : node->downloads;
+                return node;
+            }
+
+            // If we're not updating, perform the actual deletion process
+            if (node->left == nullptr && node->right == nullptr)
+            {
+                delete node;
+                node = nullptr;
+                return node;
+            }
+            else if (node->left == nullptr)
+            {
+                Node *temp = node->right;
+                delete node;
+                return temp;
+            }
+            else if (node->right == nullptr)
+            {
+                Node *temp = node->left;
+                delete node;
+                return temp;
+            }
+
+            Node *temp = minValueNode(node->right);
+            node->gameId = temp->gameId;
+            node->name = temp->name;
+            node->developer = temp->developer;
+            node->publisher = temp->publisher;
+            node->file_size_in_GB = temp->file_size_in_GB;
+            node->downloads = temp->downloads;
+            node->right = deleteNode(node->right, temp->gameId);
+        }
+
+        node->height = 1 + max(height(node->left), height(node->right));
+        int balance = height(node->left) - height(node->right);
+
+        // Balance the tree if it becomes unbalanced
+        if (balance > 1)
+        {
+            if (height(node->left->left) - height(node->left->right) >= 0)
+                return rotateRight(node);
+            else
+                return rotateLeftRight(node);
+        }
+        if (balance < -1)
+        {
+            if (height(node->right->right) - height(node->right->left) >= 0)
+                return rotateLeft(node);
+            else
+                return rotateRightLeft(node);
+        }
+
+        return node;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -217,30 +301,32 @@ public:
         root = insert(root, gameId, name, developer, publisher, file_size_in_GB, downloads);
     }
 
-    // Updates the details of a game in the tree
-    void updateGame(string _gameId, Node updateNode)
+    // Delete a player from the tree
+    void deleteNode(string gameId)
     {
-        Node *node = root;
+        root = deleteNode(root, gameId);
+    }
 
-        while (node != NULL)
+    // Update the information of the game
+    void updateGame(string _gameId, Node *updatedNode)
+    {
+        if (_gameId != updatedNode->gameId)
         {
-            if (node->gameId == _gameId)
-            {
-                node->name = updateNode.name;
-                node->gameId = updateNode.gameId;
-                node->developer = updateNode.developer;
-                node->publisher = updateNode.publisher;
-                node->file_size_in_GB = updateNode.file_size_in_GB;
-                node->downloads = updateNode.downloads;
-                return;
-            }
-            else if (isGreater(node->gameId, _gameId))
-                node = node->left;
-            else
-                node = node->right;
-        }
+            Node *game = get_game(_gameId);
+            if (game == nullptr)
+                throw out_of_range("Invalid Game Id!");
 
-        throw out_of_range("Invalid Game Id!");
+            updatedNode->name = updatedNode->name == "" ? game->name : updatedNode->name;
+            updatedNode->developer = updatedNode->developer == "" ? game->developer : updatedNode->developer;
+            updatedNode->publisher = updatedNode->publisher == "" ? game->publisher : updatedNode->publisher;
+            updatedNode->file_size_in_GB = updatedNode->file_size_in_GB == -1.0f ? game->file_size_in_GB : updatedNode->file_size_in_GB;
+            updatedNode->downloads = updatedNode->downloads == -1 ? game->downloads : updatedNode->downloads;
+
+            root = deleteNode(root, _gameId);
+            root = insert(root, updatedNode->gameId, updatedNode->name, updatedNode->developer, updatedNode->publisher, updatedNode->file_size_in_GB, updatedNode->downloads);
+        }
+        else
+            root = deleteNode(root, _gameId, updatedNode);
     }
 
     Node *get_game(string _gameId)
@@ -430,6 +516,84 @@ private:
         return node;
     }
 
+    // Returns the minimum value in a tree
+    Node *minValueNode(Node *node)
+    {
+        Node *current = node;
+        while (current->left != nullptr)
+            current = current->left;
+        return current;
+    }
+
+    Node *deleteNode(Node *node, string gameId, Node *updatedNode = nullptr)
+    {
+        if (node == nullptr)
+            return node;
+
+        if (isGreater(node->gameId, gameId))
+            node->left = deleteNode(node->left, gameId, updatedNode);
+        else if (isGreater(gameId, node->gameId))
+            node->right = deleteNode(node->right, gameId, updatedNode);
+        else
+        {
+            if (updatedNode != nullptr)
+            {
+                // Instead of deleting, directly update the node's data
+                node->gameId = updatedNode->gameId != "" ? updatedNode->gameId : node->gameId;
+                node->hours_played = updatedNode->hours_played != -1.0f ? updatedNode->hours_played : node->hours_played;
+                node->achievements_unlocked = updatedNode->achievements_unlocked != -1 ? updatedNode->achievements_unlocked : node->achievements_unlocked;
+                return node;
+            }
+
+            // If we're not updating, perform the actual deletion process
+            if (node->left == nullptr && node->right == nullptr)
+            {
+                delete node;
+                node = nullptr;
+                return node;
+            }
+            else if (node->left == nullptr)
+            {
+                Node *temp = node->right;
+                delete node;
+                return temp;
+            }
+            else if (node->right == nullptr)
+            {
+                Node *temp = node->left;
+                delete node;
+                return temp;
+            }
+
+            Node *temp = minValueNode(node->right);
+            node->gameId = temp->gameId;
+            node->hours_played = updatedNode->hours_played;
+            node->achievements_unlocked = updatedNode->achievements_unlocked;
+            node->right = deleteNode(node->right, temp->gameId);
+        }
+
+        node->height = 1 + max(height(node->left), height(node->right));
+        int balance = height(node->left) - height(node->right);
+
+        // Balance the tree if it becomes unbalanced
+        if (balance > 1)
+        {
+            if (height(node->left->left) - height(node->left->right) >= 0)
+                return rotateRight(node);
+            else
+                return rotateLeftRight(node);
+        }
+        if (balance < -1)
+        {
+            if (height(node->right->right) - height(node->right->left) >= 0)
+                return rotateLeft(node);
+            else
+                return rotateRightLeft(node);
+        }
+
+        return node;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -460,6 +624,46 @@ public:
     void insert(string gameId, float hours_played, int achievements_unlocked)
     {
         root = insert(root, gameId, hours_played, achievements_unlocked);
+    }
+
+    // Delete a game from the tree
+    void deleteGame(string gameId)
+    {
+        root = deleteNode(root, gameId);
+    }
+
+    // Update the information of the game
+    void updateGame(string _gameId, Node *updatedNode)
+    {
+        if (_gameId != updatedNode->gameId)
+        {
+            Node *game = get_game(_gameId);
+            updatedNode->hours_played = updatedNode->hours_played == -1.0f ? game->hours_played : updatedNode->hours_played;
+            updatedNode->achievements_unlocked = updatedNode->achievements_unlocked == -1 ? game->achievements_unlocked : updatedNode->achievements_unlocked;
+
+            root = deleteNode(root, _gameId);
+            root = insert(root, updatedNode->gameId, updatedNode->hours_played, updatedNode->achievements_unlocked);
+        }
+        else
+            root = deleteNode(root, _gameId, updatedNode);
+    }
+
+    // Returns the game with the given game id
+    Node *get_game(string gameId)
+    {
+        Node *node = root;
+
+        while (node != nullptr)
+        {
+            if (isGreater(node->gameId, gameId))
+                node = node->left;
+            else if (isGreater(gameId, node->gameId))
+                node = node->right;
+            else
+                return node;
+        }
+
+        throw out_of_range("Invalid Game Id!");
     }
 
     // Prints the tree in order
@@ -641,6 +845,106 @@ private:
         return node;
     }
 
+    // Inserts a game in a player's games list
+    Node *insertGame(Node *node, string playerId, string gameId, float hours_played, int achievements_unlocked)
+    {
+        if (node == nullptr)
+            return nullptr;
+
+        if (node->playerId == playerId)
+            node->games.insert(gameId, hours_played, achievements_unlocked);
+
+        if (isGreater(node->playerId, playerId))
+            node->left = insertGame(node->left, playerId, gameId, hours_played, achievements_unlocked);
+        else if (isGreater(playerId, node->playerId))
+            node->right = insertGame(node->right, playerId, gameId, hours_played, achievements_unlocked);
+
+        return node;
+    }
+
+    // Returns the minimum value in a tree
+    Node *minValueNode(Node *node)
+    {
+        Node *current = node;
+        while (current->left != nullptr)
+            current = current->left;
+        return current;
+    }
+
+    // Delete a node from the tree
+    Node *deleteNode(Node *node, string playerId, Node *updatedNode = nullptr)
+    {
+        if (node == nullptr)
+            return node;
+
+        if (isGreater(node->playerId, playerId))
+            node->left = deleteNode(node->left, playerId, updatedNode);
+        else if (isGreater(playerId, node->playerId))
+            node->right = deleteNode(node->right, playerId, updatedNode);
+        else
+        {
+            if (updatedNode != nullptr)
+            {
+                // Instead of deleting, directly update the node's data
+                node->playerId = updatedNode->playerId != "" ? updatedNode->playerId : node->playerId;
+                node->name = updatedNode->name != "" ? updatedNode->name : node->name;
+                node->phnNo = updatedNode->phnNo != "" ? updatedNode->phnNo : node->phnNo;
+                node->email = updatedNode->email != "" ? updatedNode->email : node->email;
+                node->password = updatedNode->password != "" ? updatedNode->password : node->password;
+                return node;
+            }
+
+            // If we're not updating, perform the actual deletion process
+            if (node->left == nullptr && node->right == nullptr)
+            {
+                delete node;
+                node = nullptr;
+                return node;
+            }
+            else if (node->left == nullptr)
+            {
+                Node *temp = node->right;
+                delete node;
+                return temp;
+            }
+            else if (node->right == nullptr)
+            {
+                Node *temp = node->left;
+                delete node;
+                return temp;
+            }
+
+            Node *temp = minValueNode(node->right);
+            node->playerId = temp->playerId;
+            node->name = temp->name;
+            node->phnNo = temp->phnNo;
+            node->email = temp->email;
+            node->password = temp->password;
+            node->right = deleteNode(node->right, temp->playerId);
+        }
+
+        node->height = 1 + max(height(node->left), height(node->right));
+        int balance = height(node->left) - height(node->right);
+
+        // Balance the tree if it becomes unbalanced
+        if (balance > 1)
+        {
+            if (height(node->left->left) - height(node->left->right) >= 0)
+                return rotateRight(node);
+            else
+                return rotateLeftRight(node);
+        }
+        if (balance < -1)
+        {
+            if (height(node->right->right) - height(node->right->left) >= 0)
+                return rotateLeft(node);
+            else
+                return rotateRightLeft(node);
+        }
+
+        return node;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -665,6 +969,7 @@ public:
         return root;
     }
 
+    // Returns the height of the tree
     int getHeight()
     {
         return height(root);
@@ -676,47 +981,34 @@ public:
         root = insert(root, playerId, name, phnNo, email, password);
     }
 
-    // Inserts a game in a player's games list
-    Node *insertGame(Node *node, string playerId, string gameId, float hours_played, int achievements_unlocked)
+    // Insert a new game in player's game list
+    void insertGame(string playerId, string gameId, float hours_played, int achievements_unlocked)
     {
-        if (node == nullptr)
-            return nullptr;
+        root = insertGame(root, playerId, gameId, hours_played, achievements_unlocked);
+    }
 
-        if (node->playerId == playerId)
-            node->games.insert(gameId, hours_played, achievements_unlocked);
-
-        if (isGreater(node->playerId, playerId))
-            node->left = insertGame(node->left, playerId, gameId, hours_played, achievements_unlocked);
-        else if (isGreater(playerId, node->playerId))
-            node->right = insertGame(node->right, playerId, gameId, hours_played, achievements_unlocked);
-
-        return node;
+    // Delete a player from the tree
+    void deletePlayer(string playerId)
+    {
+        root = deleteNode(root, playerId);
     }
 
     // Update the information of the player
-    void updatePlayer(string _playerId, Node updatedNode)
+    void updatePlayer(string _playerId, Node *updatedNode)
     {
-        Node *node = root;
-
-        while (node)
+        if (_playerId != updatedNode->playerId && updatedNode->playerId != "")
         {
-            cout << node->playerId << endl;
-            if (node->playerId == _playerId)
-            {
-                node->name = updatedNode.name;
-                node->playerId = updatedNode.playerId;
-                node->phnNo = updatedNode.phnNo;
-                node->email = updatedNode.email;
-                node->password = updatedNode.password;
-                return;
-            }
-            else if (isGreater(node->playerId, _playerId))
-                node = node->left;
-            else
-                node = node->right;
-        }
+            Node *player = get_player(_playerId);
+            updatedNode->name = updatedNode->name == "" ? player->name : updatedNode->name;
+            updatedNode->phnNo = updatedNode->phnNo == "" ? player->phnNo : updatedNode->phnNo;
+            updatedNode->email = updatedNode->email == "" ? player->email : updatedNode->email;
+            updatedNode->password = updatedNode->password == "" ? player->password : updatedNode->password;
 
-        throw out_of_range("Invalid Player Id!");
+            root = deleteNode(root, _playerId);
+            root = insert(root, updatedNode->playerId, updatedNode->name, updatedNode->phnNo, updatedNode->email, updatedNode->password);
+        }
+        else
+            root = deleteNode(root, _playerId, updatedNode);
     }
 
     // Returns the player with the given player id
@@ -838,7 +1130,7 @@ void load_player(Player &player)
             if (i == 3)
             {
                 // Insert a new game into the player's games list
-                player.insertGame(player.getRoot(), playerData[0], game_data[0], toFloat(game_data[1]), toInt(game_data[2]));
+                player.insertGame(playerData[0], game_data[0], toFloat(game_data[1]), toInt(game_data[2]));
                 i = 0;
                 game_data[0] = "";
                 game_data[1] = "";
@@ -898,10 +1190,17 @@ int main()
     load_player(player);
     // load_games(game);
 
-    player.updatePlayer("1973833443", Player::Node("Rayan Ahmed", "230018", "0232", "ra33286", "ra990"));
     player.print();
+    // game.print();
     cout << endl;
-    player.updatePlayer("230018", Player::Node("Rayanosures", "6122005", "0323", "ra1905", "ra1905"));
+    
+    Player::Node *updatedNode = new Player::Node("Yango", "9675812504", "0323", "ra33286", "ra990");
+    player.updatePlayer("4973616414", updatedNode);
+    player.print();
+    
+    // Game::Node *updatedNode = new Game::Node("2301982", "Tango", "Yellow", "Green", 15.678, 120);
+    // game.updateGame("9410009774", updatedNode);
+    // game.print();
 
     return 0;
 }
