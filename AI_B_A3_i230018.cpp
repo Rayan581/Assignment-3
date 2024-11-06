@@ -8,6 +8,78 @@
 
 using namespace std;
 
+template <typename T>
+class Queue
+{
+private:
+    struct Node
+    {
+        T data;
+        Node *next;
+    };
+    Node *front;
+    Node *rear;
+
+public:
+    Queue()
+    {
+        front = nullptr;
+        rear = nullptr;
+    }
+
+    // Returns if the queue is empty
+    bool isEmpty()
+    {
+        return (front == nullptr);
+    }
+
+    // Enqueues an element in the queue
+    void enqueue(T value)
+    {
+        Node *newNode = new Node;
+        newNode->data = value;
+        newNode->next = nullptr;
+
+        if (isEmpty())
+            front = rear = newNode;
+        else
+        {
+            rear->next = newNode;
+            rear = newNode;
+        }
+    }
+
+    // Dequeues an element from the queue
+    T dequeue()
+    {
+        if (isEmpty())
+            throw "Queue is empty. Cannot dequeue.";
+
+        T value = front->data;
+        Node *temp = front;
+        front = front->next;
+        delete temp;
+
+        if (front == nullptr)
+            rear = nullptr;
+
+        return value;
+    }
+
+    // Returns the size of the queue
+    int size()
+    {
+        int count = 0;
+        Node *temp = front;
+        while (temp != nullptr)
+        {
+            count++;
+            temp = temp->next;
+        }
+        return count;
+    }
+};
+
 // Implements the game tree structure
 class Game
 {
@@ -272,14 +344,8 @@ private:
         if (node == NULL)
             return;
         print(node->left);
-        cout << "Game ID: " << node->gameId << endl
-             << "Game Name: " << node->name << endl
-             << "Game Develepor: " << node->developer << endl
-             << "Game Publisher: " << node->publisher << endl
-             << "Game File Size: " << node->file_size_in_GB << " GB" << endl
-             << "Downloads: " << node->downloads << endl
-             << endl;
-        cout << endl;
+        cout << node->gameId << " - "
+             << node->name << endl;
         print(node->right);
     }
 
@@ -344,6 +410,29 @@ public:
         }
 
         throw out_of_range("Invalid Game Id!");
+    }
+
+    // Perform the Breadth First Traversal on the tree upto N layers
+    void displayNLayers(int N)
+    {
+        Queue<Node *> q;
+        q.enqueue(root);
+        while (!q.isEmpty() && N--)
+        {
+            int size = q.size();
+            while (size--)
+            {
+                Node *node = q.dequeue();
+                cout << node->gameId << " - " << node->name << endl;
+
+                if (node->left)
+                    q.enqueue(node->left);
+                if (node->right)
+                    q.enqueue(node->right);
+            }
+        }
+        if (N > 0)
+            cout << "Layer Limit was Reached, can't go further.";
     }
 
     // Prints the tree in order
@@ -1029,6 +1118,29 @@ public:
         throw out_of_range("Invalid Player Id!");
     }
 
+    // Perform Breadth First Traversal on the tree upto N layers
+    void displayNLayers(int N)
+    {
+        Queue<Node *> q;
+        q.enqueue(root);
+        while (!q.isEmpty() && N--)
+        {
+            int size = q.size();
+            while (size--)
+            {
+                Node *node = q.dequeue();
+                cout << node->playerId << " - " << node->name << endl;
+
+                if (node->left)
+                    q.enqueue(node->left);
+                if (node->right)
+                    q.enqueue(node->right);
+            }
+        }
+        if (N > 0)
+            cout << "Layer Limit was Reached, can't go further.";
+    }
+
     // Prints the tree in order
     void print()
     {
@@ -1187,17 +1299,20 @@ int main()
     Player player;
     Game game;
 
-    load_player(player);
-    // load_games(game);
+    // load_player(player);
+    load_games(game);
 
-    player.print();
+    // player.print();
     // game.print();
+
+    // player.displayNLayers(4);
+    game.displayNLayers(10);
     cout << endl;
-    
-    Player::Node *updatedNode = new Player::Node("Yango", "9675812504", "0323", "ra33286", "ra990");
-    player.updatePlayer("4973616414", updatedNode);
-    player.print();
-    
+
+    // Player::Node *updatedNode = new Player::Node("Yango", "9675812504", "0323", "ra33286", "ra990");
+    // player.updatePlayer("4973616414", updatedNode);
+    // player.print();
+
     // Game::Node *updatedNode = new Game::Node("2301982", "Tango", "Yellow", "Green", 15.678, 120);
     // game.updateGame("9410009774", updatedNode);
     // game.print();
