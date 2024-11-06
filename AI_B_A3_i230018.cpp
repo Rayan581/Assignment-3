@@ -8,6 +8,49 @@
 
 using namespace std;
 
+// Returns the length of the string
+int len(string str)
+{
+    int len = 0;
+    for (int i = 0; str[i] != '\0'; i++)
+        len++;
+    return len;
+}
+
+// Converts the string to float
+float toFloat(string str)
+{
+    float result = 0.0f;
+    float decimalPlace = 1.0f;
+    bool hasDecimal = false;
+
+    for (int i = 0; i < len(str); i++)
+    {
+        if (str[i] == '.')
+        {
+            hasDecimal = true;
+            continue;
+        }
+        if (hasDecimal)
+        {
+            decimalPlace *= 0.1f;
+            result += (str[i] - '0') * decimalPlace;
+        }
+        else
+            result = result * 10.0f + (str[i] - '0');
+    }
+    return result;
+}
+
+// Converts the string to integer
+int toInt(string str)
+{
+    int result = 0;
+    for (int i = 0; i < len(str); i++)
+        result = result * 10 + (str[i] - '0');
+    return result;
+}
+
 template <typename T>
 class Queue
 {
@@ -224,6 +267,8 @@ private:
             node->left = insert(node->left, _gameId, _name, _developer, _publisher, _file_size_in_GB, _downloads);
         else if (isGreater(_gameId, node->gameId))
             node->right = insert(node->right, _gameId, _name, _developer, _publisher, _file_size_in_GB, _downloads);
+        else
+            cout << "Cannot insert duplicate game!" << endl;
 
         node->height = 1 + max(height(node->left), height(node->right));
 
@@ -338,6 +383,27 @@ private:
         return node;
     }
 
+    void saveCSV(Node *node, ofstream &file)
+    {
+        if (node == nullptr)
+            return;
+
+        file << node->gameId << "," << node->name << "," << node->developer << "," << node->publisher << "," << node->file_size_in_GB << "," << node->downloads << "\n";
+        saveCSV(node->left, file);
+        saveCSV(node->right, file);
+    }
+
+    // Delete all the nodes from the tree
+    void clear(Node *node)
+    {
+        if (node == nullptr)
+            return;
+
+        clear(node->left);
+        clear(node->right);
+        delete node;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -433,6 +499,76 @@ public:
         }
         if (N > 0)
             cout << "Layer Limit was Reached, can't go further.";
+    }
+
+    // Show layer number of a player
+    int layerNumber(string gameId)
+    {
+        Node *node = root;
+        int layer = 1;
+        while (node)
+        {
+            cout << "Checking node with gameId: " << node->gameId << " at layer " << layer << endl;
+            if (node->gameId == gameId)
+                return layer;
+            else if (isGreater(node->gameId, gameId))
+            {
+                layer++;
+                node = node->left;
+            }
+            else
+            {
+                layer++;
+                node = node->right;
+            }
+        }
+        cout << "Player is not found: ";
+        return -1;
+    }
+
+    void saveCSV()
+    {
+        ofstream file("games.csv");
+        if (file.is_open())
+        {
+            saveCSV(root, file);
+            file.close();
+        }
+        else
+            cout << "Unable to open file!";
+    }
+
+    // Load the tree from a CSV file in preorder
+    void loadCSV()
+    {
+        ifstream file("games.csv");
+        clear(root); // Clear the tree before loading the data
+        root = nullptr;
+
+        // Read each line from the file
+        string line = "";
+        while (getline(file, line))
+        {
+            string gameData[6];
+            int i = 0;
+            int j = 0;
+
+            // Read and store information of games
+            while (j < len(line))
+            {
+                if (line[j] == ',')
+                {
+                    i++;
+                    j++;
+                    continue;
+                }
+                gameData[i] += line[j];
+                j++;
+            }
+
+            // // Insert a new game
+            insert(gameData[0], gameData[1], gameData[2], gameData[3], toFloat(gameData[4]), toInt(gameData[5]));
+        }
     }
 
     // Prints the tree in order
@@ -574,7 +710,7 @@ private:
         else if (isGreater(_gameId, node->gameId))
             node->right = insert(node->right, _gameId, hours_played, achievements_unlocked);
         else
-            throw invalid_argument("Cannot insert duplicate game"); // Throw exception when trying to insert duplicate player
+            cout << "Cannot insert duplicate game!" << endl;
 
         node->height = 1 + max(height(node->left), height(node->right));
 
@@ -683,6 +819,17 @@ private:
         return node;
     }
 
+    // Deletes all nodes of the tree
+    void clear(Node *node)
+    {
+        if (node == nullptr)
+            return;
+
+        clear(node->left);
+        clear(node->right);
+        delete node;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -753,6 +900,23 @@ public:
         }
 
         throw out_of_range("Invalid Game Id!");
+    }
+
+    // Clears the tree
+    void clear()
+    {
+        clear(root);
+        root = nullptr;
+    }
+
+    void saveCSV(Node *node, ofstream &file)
+    {
+        if (node == nullptr)
+            return;
+
+        file << node->gameId << "," << node->hours_played << "," << node->achievements_unlocked << ",";
+        saveCSV(node->left, file);
+        saveCSV(node->right, file);
     }
 
     // Prints the tree in order
@@ -903,7 +1067,7 @@ private:
         else if (isGreater(_playerId, node->playerId))
             node->right = insert(node->right, _playerId, _name, _phnNo, _email, _password);
         else
-            throw invalid_argument("Cannot insert duplicate player"); // Throw exception when trying to insert duplicate player
+            cout << "Cannot insert duplicate player" << endl;
 
         node->height = 1 + max(height(node->left), height(node->right));
 
@@ -986,6 +1150,7 @@ private:
             // If we're not updating, perform the actual deletion process
             if (node->left == nullptr && node->right == nullptr)
             {
+                node->games.clear();
                 delete node;
                 node = nullptr;
                 return node;
@@ -993,12 +1158,14 @@ private:
             else if (node->left == nullptr)
             {
                 Node *temp = node->right;
+                temp->games.clear();
                 delete node;
                 return temp;
             }
             else if (node->right == nullptr)
             {
                 Node *temp = node->left;
+                temp->games.clear();
                 delete node;
                 return temp;
             }
@@ -1009,6 +1176,7 @@ private:
             node->phnNo = temp->phnNo;
             node->email = temp->email;
             node->password = temp->password;
+            node->games = temp->games;
             node->right = deleteNode(node->right, temp->playerId);
         }
 
@@ -1032,6 +1200,32 @@ private:
         }
 
         return node;
+    }
+
+    // Save the tree in csv file in preorder
+    void saveCSV(Node *node, ofstream &file)
+    {
+        if (node == nullptr)
+            return;
+
+        file << node->playerId << "," << node->name << "," << node->phnNo << "," << node->email << "," << node->password << ",";
+        node->games.saveCSV(node->games.getRoot(), file);
+        file << "\n";
+        saveCSV(node->left, file);
+        saveCSV(node->right, file);
+    }
+
+    // Delete every node of the tree
+    void clear(Node *node)
+    {
+        if (node == nullptr)
+            return;
+
+        clear(node->left);
+        clear(node->right);
+        node->games.clear();
+        delete node;
+        node = nullptr;
     }
 
     // Prints the tree in order
@@ -1141,55 +1335,106 @@ public:
             cout << "Layer Limit was Reached, can't go further.";
     }
 
+    // Show layer number of a player
+    int layerNumber(string playerId)
+    {
+        Node *node = root;
+        int layer = 1;
+        while (node)
+        {
+            if (node->playerId == playerId)
+                return layer;
+            else if (isGreater(node->playerId, playerId))
+            {
+                layer++;
+                node = node->left;
+            }
+            else
+            {
+                layer++;
+                node = node->right;
+            }
+        }
+        cout << "Player is not found: ";
+        return -1;
+    }
+
+    // Save the tree in a CSV file in preorder
+    void saveCSV()
+    {
+        ofstream file("players.csv");
+        if (file.is_open())
+        {
+            saveCSV(root, file);
+            file.close();
+        }
+        else
+            cout << "Unable to open file!";
+    }
+
+    // Load the tree from a CSV file in preorder
+    void loadCSV()
+    {
+        ifstream file("players.csv");
+        clear(root); // Clear the tree before loading data
+        root = nullptr;
+        if (file.is_open())
+        {
+            string line = "";
+            while (getline(file, line))
+            {
+                string playerData[5];
+                int i = 0;
+                int j = 0;
+
+                // Read and store information of player
+                for (j = 0; i < 5; j++)
+                {
+                    if (line[j] == ',')
+                    {
+                        i++;
+                        continue;
+                    }
+                    playerData[i] += line[j];
+                }
+
+                // Insert a new player
+                insert(playerData[0], playerData[1], playerData[2], playerData[3], playerData[4]);
+
+                string game_data[3];
+                i = 0;
+
+                // Read and store information of games
+                while (j < len(line))
+                {
+                    if (line[j] == ',')
+                    {
+                        i++;
+                        j++;
+                        continue;
+                    }
+                    if (i == 3)
+                    {
+                        // Insert a new game into the player's games list
+                        insertGame(playerData[0], game_data[0], toFloat(game_data[1]), toInt(game_data[2]));
+                        i = 0;
+                        game_data[0] = "";
+                        game_data[1] = "";
+                        game_data[2] = "";
+                    }
+                    game_data[i] += line[j];
+                    j++;
+                }
+            }
+        }
+    }
+
     // Prints the tree in order
     void print()
     {
         print(root);
     }
 };
-
-// Returns the length of the string
-int len(string str)
-{
-    int len = 0;
-    for (int i = 0; str[i] != '\0'; i++)
-        len++;
-    return len;
-}
-
-// Converts the string to float
-float toFloat(string str)
-{
-    float result = 0.0f;
-    float decimalPlace = 1.0f;
-    bool hasDecimal = false;
-
-    for (int i = 0; i < len(str); i++)
-    {
-        if (str[i] == '.')
-        {
-            hasDecimal = true;
-            continue;
-        }
-        if (hasDecimal)
-        {
-            decimalPlace *= 0.1f;
-            result += (str[i] - '0') * decimalPlace;
-        }
-        else
-            result = result * 10.0f + (str[i] - '0');
-    }
-    return result;
-}
-
-// Converts the string to integer
-int toInt(string str)
-{
-    int result = 0;
-    for (int i = 0; i < len(str); i++)
-        result = result * 10 + (str[i] - '0');
-    return result;
-}
 
 // Loads the data from the Players.txt file into the tree
 void load_player(Player &player)
@@ -1299,22 +1544,36 @@ int main()
     Player player;
     Game game;
 
+    // player.loadCSV();
+    // game.loadCSV();
+
     // load_player(player);
-    load_games(game);
+    // load_games(game);
 
     // player.print();
     // game.print();
 
+    // player.loadCSV();
+    // player.print();
+    // game.loadCSV();
+    // game.print();
+
     // player.displayNLayers(4);
-    game.displayNLayers(10);
-    cout << endl;
+    // game.displayNLayers(4);
+    // cout << game.layerNumber("5341335360");
+    // cout << endl;
+
+    // player.saveCSV();
+    // game.saveCSV();
 
     // Player::Node *updatedNode = new Player::Node("Yango", "9675812504", "0323", "ra33286", "ra990");
     // player.updatePlayer("4973616414", updatedNode);
+    // player.deletePlayer("1590084481");
     // player.print();
 
     // Game::Node *updatedNode = new Game::Node("2301982", "Tango", "Yellow", "Green", 15.678, 120);
     // game.updateGame("9410009774", updatedNode);
+    // game.deleteGame("9410009774");
     // game.print();
 
     return 0;
