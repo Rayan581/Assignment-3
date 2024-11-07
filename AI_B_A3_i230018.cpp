@@ -404,6 +404,25 @@ private:
         delete node;
     }
 
+    // Print the preorder traversal path to reach a node
+    bool preorderPath(Node *node, string gameId)
+    {
+        if (node == nullptr)
+            return false;
+
+        cout << node->gameId << " - " << node->name << endl;
+        if (node->gameId == gameId)
+            return true;
+
+        if (preorderPath(node->left, gameId))
+            return true;
+
+        if (preorderPath(node->right, gameId))
+            return true;
+
+        return false;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -569,6 +588,12 @@ public:
             // // Insert a new game
             insert(gameData[0], gameData[1], gameData[2], gameData[3], toFloat(gameData[4]), toInt(gameData[5]));
         }
+    }
+
+    // Show preorder traversal path to find a node
+    void preorderPath(string gameId)
+    {
+        preorderPath(root, gameId);
     }
 
     // Prints the tree in order
@@ -838,8 +863,7 @@ private:
         print(node->left);
         cout << "Game ID: " << node->gameId << endl
              << "Hours Played: " << node->hours_played << endl
-             << "Achievements Earned: " << node->achievements_unlocked << endl
-             << "Height: " << node->height << endl;
+             << "Achievements Earned: " << node->achievements_unlocked << endl;
         cout << endl;
         print(node->right);
     }
@@ -919,6 +943,22 @@ public:
         saveCSV(node->right, file);
     }
 
+    // Returns if a game is in the tree
+    bool hasGame(Node *node, string gameId)
+    {
+        if (node == nullptr)
+            return false;
+
+        if (isGreater(node->gameId, gameId))
+            return hasGame(node->left, gameId);
+        else if (isGreater(gameId, node->gameId))
+            return hasGame(node->right, gameId);
+        else
+            return true;
+
+        return false;
+    }
+
     // Prints the tree in order
     void print()
     {
@@ -938,6 +978,7 @@ public:
         string phnNo;
         string email;
         string password;
+        int gamesPlayed;
         Game_Played games;
 
         Node *left;
@@ -951,6 +992,7 @@ public:
             phnNo = "";
             email = "";
             password = "";
+            gamesPlayed = 0;
             left = NULL;
             right = NULL;
             height = 0;
@@ -963,6 +1005,7 @@ public:
             phnNo = _phnNo;
             email = _email;
             password = _password;
+            gamesPlayed = 0;
             left = NULL;
             right = NULL;
             height = 0;
@@ -971,6 +1014,93 @@ public:
 
 private:
     Node *root;
+    class topPlayers
+    {
+    private:
+        struct Node
+        {
+            Player::Node *playerNode;
+            Node *left;
+            Node *right;
+        };
+        Node *root;
+
+        // Insert a new player in the tree
+        Node *insert(Node *node, Player::Node *player)
+        {
+            if (node == nullptr)
+            {
+                Node *newNode = new Node;
+                newNode->playerNode = player;
+                newNode->left = nullptr;
+                newNode->right = nullptr;
+                return newNode;
+            }
+            else if (node->playerNode->gamesPlayed <= player->gamesPlayed)
+                node->right = insert(node->right, player);
+            else
+                node->left = insert(node->left, player);
+
+            return node;
+        }
+
+        // Prints top N players
+        void getTopPlayers(Node *node, int N, int &count)
+        {
+            if (node == nullptr)
+                return;
+
+            getTopPlayers(node->right, N, count);
+            if (count < N)
+            {
+                count++;
+                cout << "Player Name: " << node->playerNode->name << endl
+                     << "Player Id: " << node->playerNode->playerId << endl
+                     << "Games Played: " << node->playerNode->gamesPlayed << endl
+                     << endl;
+            }
+            getTopPlayers(node->left, N, count);
+        }
+
+        // Delete every node of the tree
+        void clear(Node *node)
+        {
+            if (node == nullptr)
+                return;
+
+            clear(node->left);
+            clear(node->right);
+            delete node;
+            node = nullptr;
+        }
+
+    public:
+        topPlayers()
+        {
+            root = nullptr;
+        }
+
+        // Insert a new player in the tree
+        void insert(Player::Node *player)
+        {
+            root = insert(root, player);
+        }
+
+        // Prints top N players
+        void getTopPlayers(int N)
+        {
+            int count = 0;
+            getTopPlayers(root, N, count);
+        }
+
+        // Clears the tree
+        void clear()
+        {
+            clear(root);
+            root = nullptr;
+        }
+    };
+    topPlayers topPlayers;
 
     // Returns if the number stored in string form is greater than the other
     bool isGreater(string str1, string str2)
@@ -1105,7 +1235,10 @@ private:
             return nullptr;
 
         if (node->playerId == playerId)
+        {
             node->games.insert(gameId, hours_played, achievements_unlocked);
+            node->gamesPlayed++;
+        }
 
         if (isGreater(node->playerId, playerId))
             node->left = insertGame(node->left, playerId, gameId, hours_played, achievements_unlocked);
@@ -1228,6 +1361,41 @@ private:
         node = nullptr;
     }
 
+    // Print the preorder traversal path to reach a node
+    bool preorderPath(Node *node, string playerId)
+    {
+        if (node == nullptr)
+            return false;
+
+        cout << node->playerId << " - " << node->name << endl;
+        if (node->playerId == playerId)
+            return true;
+
+        if (preorderPath(node->left, playerId))
+            return true;
+
+        if (preorderPath(node->right, playerId))
+            return true;
+
+        return false;
+    }
+
+    // Returns if a player has played a game
+    bool hasPlayed(Node *node, string playerId, string gameId)
+    {
+        if (node == nullptr)
+            return false;
+
+        if (isGreater(node->playerId, playerId))
+            return hasPlayed(node->left, playerId, gameId);
+        else if (isGreater(playerId, node->playerId))
+            return hasPlayed(node->right, playerId, gameId);
+        else
+            return node->games.hasGame(node->games.getRoot(), gameId);
+
+        return false;
+    }
+
     // Prints the tree in order
     void print(Node *node)
     {
@@ -1256,6 +1424,12 @@ public:
     int getHeight()
     {
         return height(root);
+    }
+
+    // Insert player in topPlayers tree
+    void insertTopPlayer(Node *player)
+    {
+        topPlayers.insert(player);
     }
 
     // Inserts a node into the tree
@@ -1378,6 +1552,7 @@ public:
         ifstream file("players.csv");
         clear(root); // Clear the tree before loading data
         root = nullptr;
+        topPlayers.clear();
         if (file.is_open())
         {
             string line = "";
@@ -1425,8 +1600,46 @@ public:
                     game_data[i] += line[j];
                     j++;
                 }
+
+                insertTopPlayer(get_player(playerData[0]));
             }
         }
+    }
+
+    // Show preorder traversal path to find a node
+    void preorderPath(string playerId)
+    {
+        preorderPath(root, playerId);
+    }
+
+    // Show the details of a player
+    void showDetails(string playerId)
+    {
+        Node *node = get_player(playerId);
+        cout << "Player ID: " << node->playerId << endl;
+        cout << "Name: " << node->name << endl;
+        cout << "Phone Number: " << node->phnNo << endl;
+        cout << "Email: " << node->email << endl;
+        cout << "Password: " << node->password << endl;
+        cout << endl;
+        cout << "Games: " << endl;
+        node->games.print();
+        cout << endl;
+    }
+
+    // Shows if a player has played a game
+    void hasPlayed(string playerId, string gameId)
+    {
+        if (hasPlayed(root, playerId, gameId))
+            cout << "Player " << playerId << " has played the game " << gameId << endl;
+        else
+            cout << "Player " << playerId << " has not played the game " << gameId << endl;
+    }
+
+    // Shows top N players
+    void showTopPlayers(int N)
+    {
+        topPlayers.getTopPlayers(N);
     }
 
     // Prints the tree in order
@@ -1444,7 +1657,7 @@ void load_player(Player &player)
 
     int THRESHOLD = (BATCH % 100) * 10 + 100;
 
-    ifstream file("hello.txt");
+    ifstream file("Players.txt");
 
     // Read each line from the file
     string line = "";
@@ -1496,6 +1709,8 @@ void load_player(Player &player)
             game_data[i] += line[j];
             j++;
         }
+
+        player.insertTopPlayer(player.get_player(playerData[0]));
     }
 }
 
@@ -1544,14 +1759,24 @@ int main()
     Player player;
     Game game;
 
-    // player.loadCSV();
-    // game.loadCSV();
-
     // load_player(player);
     // load_games(game);
 
+    // player.saveCSV();
+    // game.saveCSV();
+
+    // player.loadCSV();
+    // game.loadCSV();
+
     // player.print();
     // game.print();
+
+    // player.preorderPath("1973833443");
+    // game.preorderPath("5341335360");
+
+    // player.showDetails("1973833443");
+    // player.hasPlayed("1973833443", "7442874221");
+    // player.showTopPlayers(3);
 
     // player.loadCSV();
     // player.print();
@@ -1562,9 +1787,6 @@ int main()
     // game.displayNLayers(4);
     // cout << game.layerNumber("5341335360");
     // cout << endl;
-
-    // player.saveCSV();
-    // game.saveCSV();
 
     // Player::Node *updatedNode = new Player::Node("Yango", "9675812504", "0323", "ra33286", "ra990");
     // player.updatePlayer("4973616414", updatedNode);
